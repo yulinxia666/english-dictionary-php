@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>英汉词典登录首页</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        /* 1. 柔和过渡的动态流光背景 */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+
+            /* 👇 核心修改：把 50% 的硬切边，改成了 35% 到 65% 的柔和过渡 👇 */
+            background: linear-gradient(135deg, #a8edea 0%, #a8edea 35%, #fed6e3 65%, #fed6e3 100%);
+            background-size: 200% 200%;
+            transition: background-position 0.2s ease-out;
+        }
+
+        /* 2. 核心白底卡片（升级为毛玻璃特效） */
+        form {
+            /* 👇 核心修改：背景变成半透明，加上背景模糊 👇 */
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+
+            width: 850px;
+            height: 480px;
+            border-radius: 24px;
+            /* 双层阴影：外层大阴影+内层高光边框，质感拉满 */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 420px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            font-size: 0;
+            transition: transform 0.4s ease;
+        }
+
+        /* 让卡片在鼠标悬浮时微微上浮 */
+        form:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 3. 左侧图片区 */
+        form::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 420px;
+            height: 100%;
+            background-color: rgba(253, 228, 236, 0.7); /* 粉色也变半透明 */
+            background-image: url('./可爱小猫.png');
+            background-size: 250px auto;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 24px 0 0 24px;
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        form br { display: none; }
+
+        /* 4. 右侧内容包裹层 */
+        .right-panel {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .right-panel h1 {
+            font-size: 28px;
+            color: #333;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        /* 5. 输入框美化（加了内阴影质感） */
+        .right-panel input {
+            display: block;
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(244, 246, 248, 0.8);
+            font-size: 15px;
+            color: #333;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s;
+            background-repeat: no-repeat;
+            background-position: 20px center;
+            background-size: 18px;
+            padding-left: 50px;
+            margin: 0;
+            /* 内阴影增加立体感 */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        /* 输入框获取焦点时，产生呼吸发光效果 */
+        .right-panel input:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(66, 230, 149, 0.3), inset 0 2px 4px rgba(0,0,0,0.02);
+            transform: translateY(-1px);
+        }
+
+        /* 图标 */
+        input[name="username"] {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+        }
+
+        input[name="password"] {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>');
+        }
+
+        /* 6. 按钮美化（增加流光扫过特效） */
+        .right-panel button {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #42e695 0%, #3bb2b8 100%);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(66, 230, 149, 0.3);
+            margin: 0;
+            position: relative;
+            overflow: hidden; /* 为了流光特效 */
+        }
+
+        /* 按钮上的扫光动画 */
+        .right-panel button::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 30%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(30deg);
+            transition: all 0.5s;
+        }
+
+        .right-panel button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(66, 230, 149, 0.4);
+        }
+
+        .right-panel button:hover::after {
+            left: 120%; /* 鼠标悬浮时白光扫过 */
+        }
+        /* 专门美化“点击注册”的链接 */
+        .right-panel a {
+            font-size: 14px;        /* 把被隐藏的字体大小恢复回来 */
+            color: #888;            /* 设置成低调的灰色 */
+            text-decoration: none;  /* 去掉默认的下划线 */
+            text-align: center;     /* 让文字居中 */
+            margin-top: 5px;        /* 距离上面的按钮稍微远一点点 */
+            transition: all 0.3s;   /* 添加平滑过渡效果 */
+        }
+
+        /* 鼠标移上去变绿色的特效 */
+        .right-panel a:hover {
+            color: #3bb2b8;         /* 变成和你按钮一样的绿色 */
+            text-decoration: underline; /* 移上去显示下划线 */
+        }
+    </style>
+</head>
+<body>
+
+<form>
+    <!-- 用 right-panel 把右侧所有元素包裹起来 -->
+    <div class="right-panel">
+        <h1>英汉词典登录首页</h1>
+        用户名：<input type="text" name="username" placeholder="请输入账号"><br>
+        密码：<input type="password" name="password" placeholder="请输入密码"><br>
+        <button>登 录</button>
+        <a href="注册界面.html">点击注册</a>
+    </div>
+</form>
+
+<script>
+    let form=document.querySelector("form")
+    let btn=document.querySelector("button")
+    btn.addEventListener("click",function(e){
+        e.preventDefault()
+        let u = document.querySelector('input[name="username"]').value.trim();
+        let p = document.querySelector('input[name="password"]').value;
+
+        if (u === "" || p === "") {
+            alert("账号或密码不能为空！");
+            return; // 终止执行，不发请求
+        }
+        let shuju=new FormData(form);
+        axios({
+            url:"做登录的后端.php",
+            method:"POST",
+            data:shuju
+        }).then(function(res){
+            let msgText = res.data.msg ;
+            if (res.data.code===200){
+                alert(msgText);
+                location.href="登录成功后的页面.php";
+            }else{
+                alert(msgText);
+            }
+        })
+    })
+    // 监听鼠标在屏幕上的移动
+    document.addEventListener('mousemove', function(e) {
+        // 获取鼠标 X 和 Y 坐标相对于屏幕宽高的百分比 (0 到 1 之间)
+        let x = e.clientX / window.innerWidth;
+        let y = e.clientY / window.innerHeight;
+
+        // 计算背景应该移动到的位置百分比 (反向移动，产生背景跟随鼠标拉扯的感觉)
+        let bgX = (1 - x) * 100;
+        let bgY = (1 - y) * 100;
+
+        // 动态修改 body 的背景位置
+        document.body.style.backgroundPosition = `${bgX}% ${bgY}%`;
+    });
+</script>
+</body>
+</html>
